@@ -1,0 +1,86 @@
+<script>
+
+(function () {
+
+var action = "";
+var label = "";
+var latitude = "";
+var longitude = "";
+
+
+var geo = checkGeo();
+if (typeof geo != "undefined") {
+	getLocation();
+} else {
+	setGeo();
+	getLocation();
+}
+
+
+function getLocation() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(showGeo, showError);
+		} else {
+			action = "Not supported";
+			label = "";
+			sendGA(action, label);
+	}
+}
+
+function showGeo(position) {
+	action = "yes";
+	latitude = position.coords.latitude.toFixed(2);
+	longitude = position.coords.longitude.toFixed(2);
+	label =  latitude + "," + longitude;
+	dataLayer.push({'geoLat': latitude});
+	dataLayer.push({'geoLong': longitude});
+	ga('caTracker.set', 'dimension13', longitude);
+	ga('caTracker.set', 'dimension12', latitude);
+	sendGA(action, label);
+}
+
+function showError(error) {
+	action = "Error";
+	switch(error.code) {
+		case error.PERMISSION_DENIED:
+			label = "User denied the request for Geolocation.";
+			break;
+		case error.POSITION_UNAVAILABLE:
+			label = "Location information is unavailable.";
+			break;
+		case error.TIMEOUT:
+			label = "The request to get user location timed out.";
+			break;
+		case error.UNKNOWN_ERROR:
+			label = "An unknown error occurred.";
+		break;
+	};
+	sendGA(action, label);
+}
+
+function sendGA(action, label) {
+	ga('caTracker.send', 'event', {
+		eventCategory: 'Geo',
+		eventAction: action,
+		eventLabel: label
+	});
+	dataLayer.push({'geo': action + " - " + label});
+}
+
+function setGeo() {
+	localStorage.geo = "geo";
+	action = "firstTime";
+	label = "set";
+  	dataLayer.push({'geoSet': action + " - " + label});
+	sendGA(action, label);
+}
+
+function checkGeo() {
+	var geoCheck = localStorage.geo;
+	return geoCheck;
+}
+
+
+}());
+
+</script>
