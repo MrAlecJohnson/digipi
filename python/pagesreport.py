@@ -24,7 +24,7 @@ def pages():
 
     while i < length:
         out = frame.iloc[i:j]
-        out.to_gbq('AlecTest.PagesReport', 'hardy-album-169409',
+        out.to_gbq('pagesreport.pagesreport', 'hardy-album-169409',
                    if_exists = 'append', private_key=KEY_FILE_LOCATION_BQ, chunksize = None)
 
         time.sleep(60)
