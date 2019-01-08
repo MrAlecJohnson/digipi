@@ -19,8 +19,8 @@ def epi_pages_report():
     advisernet = "https://edit.citizensadvice.org.uk/api/reports/section.csv?root=36473_242727"
     public = makeFrame(public)
     adviser = makeFrame(advisernet)
-    public.to_pickle("GitRepos/customer-journey-ds/pi/python/public.pkl")
-    adviser.to_pickle("GitRepos/customer-journey-ds/pi/python/adviser.pkl")
+    public.to_pickle("../store/public.pkl")
+    adviser.to_pickle("../store/adviser.pkl")
 
 
 def makeFrame(link):
@@ -44,14 +44,14 @@ def makeFrame(link):
         frame['url'] = frame['Language']
         frame['url'] = frame['url'].replace(country_code)
         frame['url'] = site+frame['url']+frame['Path']
-        frame.loc[frame['LastReviewed'] == '01/01/0001 00:00:00','LastReviewed'] = None
+        frame.loc[frame['LastAccuracyReview'] == '01/01/0001 00:00:00','LastAccuracyReview'] = None
         frame.loc[frame['ReviewDate'] == '01/01/0001 00:00:00','ReviewDate'] = None
         frame['ReportDate'] = pd.to_datetime(frame['ReportDate'], errors = 'ignore', yearfirst = True)
         frame['StopPublish'] = pd.to_datetime(frame['StopPublish'], errors = 'ignore')
         frame['StartPublish'] = pd.to_datetime(frame['StartPublish'], errors = 'ignore')
         frame['Changed'] = pd.to_datetime(frame['Changed'], errors = 'ignore')
         frame['ReviewDate'] = pd.to_datetime(frame['ReviewDate'], errors = 'ignore')
-        frame['LastReviewed'] = pd.to_datetime(frame['LastReviewed'], errors = 'ignore')
+        frame['LastAccuracyReview'] = pd.to_datetime(frame['LastAccuracyReview'], errors = 'ignore')
         strCols = frame.select_dtypes(include = ['object'])
         frame[strCols.columns] = strCols.apply(lambda x: x.str.replace('\n|\r', ' '))
 
