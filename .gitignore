@@ -113,4 +113,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# files in store
+# files in store and pickle files
+store/
+.pkl
