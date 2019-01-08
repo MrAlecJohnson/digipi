@@ -19,6 +19,14 @@ def pages():
     KEY_FILE_LOCATION_BQ = "../creds/backlogger_bq.json"
     credentials = service_account.Credentials.from_service_account_file(KEY_FILE_LOCATION_BQ)
 
+
+    strCols = frame.select_dtypes(include = ['object'])
+    frame[strCols.columns] = strCols.apply(lambda x: x.astype('str'))
+    print(frame.dtypes)
+
+
+
+
     i = 0
     j = 5000
 
