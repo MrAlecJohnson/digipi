@@ -114,5 +114,9 @@ dmypy.json
 .pyre/
 
 # files in store and pickle files
-store/
-.pkl
+store/**
+*.pkl
+
+# files in creds
+creds/**
+*.json
