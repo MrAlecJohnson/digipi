@@ -16,8 +16,8 @@ def get_report():
     parentPath = Path(os.getcwd()).parent
 
     SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-    KEY_FILE_LOCATION = os.path.join(parentPath,"creds","client_secrets.json")
-    KEY_FILE_LOCATION_BQ = os.path.join(parentPath,"creds","bigquery.json")
+    KEY_FILE_LOCATION = "../creds/backlogger_bq.json"
+    #KEY_FILE_LOCATION_BQ = os.path.join(parentPath,"creds","backlogger_bq.json")
 
 
     VIEW_ID_DICT = {
@@ -38,12 +38,10 @@ def get_report():
       'metrics': [{'expression': 'ga:totalEvents'}],
       'dimensions': [
           {'name': 'ga:eventLabel'},
-          {'name': 'ga:pagePath'},
-          {'name': 'ga:dimension6'}],
+          {'name': 'ga:pagePath'}],
       'filtersExpression': ('ga:dimension2!~Start|index;'
         'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?;'
-        'ga:dimension6=~England;'
-        'ga:eventCategory=~PageRating'),
+        'ga:eventCategory=~pageRating'),
       'orderBys': [{'fieldName': 'ga:totalEvents', 'sortOrder': 'DESCENDING'}],
       'pageSize': 10000
     }]
@@ -56,11 +54,9 @@ def get_report():
       'dateRanges': [{'startDate': '90daysAgo', 'endDate': 'yesterday'}],
       'metrics': [{'expression': 'ga:pageviews'}],
       'dimensions': [
-          {'name': 'ga:pagePath'},
-          {'name': 'ga:dimension6'}],
+          {'name': 'ga:pagePath'}],
       'filtersExpression': ('ga:dimension2!~Start|index;'
-        'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?;'
-        'ga:dimension6=~England'),
+        'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?'),
       'orderBys': [{'fieldName': 'ga:pageviews', 'sortOrder': 'DESCENDING'}],
       'pageSize': 10000
     }]
@@ -112,7 +108,7 @@ def get_report():
 
     df2 = df.rename(index=str, columns=cols)
     df2.to_gbq(report_name, 'hardy-album-169409',
-              if_exists = 'replace', private_key=KEY_FILE_LOCATION_BQ)
+              if_exists = 'replace', private_key=KEY_FILE_LOCATION)
 
     #print(df2)
 
