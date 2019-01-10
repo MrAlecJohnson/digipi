@@ -1,2 +1,3 @@
 export DISPLAY=:0
-xdotool key --clearmodifiers ctrl+$1
+n=$(()($RANDOM%3)+1))
+xdotool key --clearmodifiers ctrl+$n
