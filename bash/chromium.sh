@@ -1,4 +1,4 @@
-export DISPLAY=":0"
+export DISPLAY=:0
 
 DISPLAY=:0 chromium-browser --noerrdialogs \
 	--disable-session-crashed-bubble \
@@ -13,5 +13,3 @@ https://datastudio.google.com/reporting/1cyiWdnfS0oZmhoKNnuOPMyzzwtL7CrBb/page/F
 https://trello.com/b/K9JPbTSj/maintenance-backlog \
 https://trello.com/b/c4XKOv5K/content-in-play-used-to-be-maintenance-2 \
 https://datastudio.google.com/reporting/1hBHJhEVCu4f25m7UHca17uIUKDY5S_Ax/page/IPOO \
-
-
