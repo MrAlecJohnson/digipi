@@ -33,7 +33,7 @@ def pages():
     while i < length:
         out = frame.iloc[i:j]
         out.to_gbq('pagesreport.pagesreport'+type, 'hardy-album-169409',
-                   if_exists = 'append', private_key=KEY_FILE_LOCATION_BQ, chunksize = None)
+                   if_exists = 'append', private_key=KEY_FILE_LOCATION_BQ)
 
         time.sleep(60)
 
