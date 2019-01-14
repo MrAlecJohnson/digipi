@@ -13,12 +13,11 @@ import sys
 
 def get_report():
 
-    parentPath = Path(os.getcwd()).parent
+    path1 = os.path.dirname(os.path.realpath(__file__))
+    parentPath = Path(path1).parent
 
     SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-    KEY_FILE_LOCATION = "../creds/backlogger_bq.json"
-    #KEY_FILE_LOCATION_BQ = os.path.join(parentPath,"creds","backlogger_bq.json")
-
+    KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
 
     VIEW_ID_DICT = {
         'Advisernet':'ga:91978884',
@@ -27,7 +26,6 @@ def get_report():
         }
 
     VIEW_ID = VIEW_ID_DICT[sys.argv[1]]
-
 
 
     rating_body = {
