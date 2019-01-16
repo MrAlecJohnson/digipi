@@ -6,6 +6,7 @@ import csv
 import requests
 from datetime import datetime
 import os
+from pathlib import Path
 pd.set_option('display.max_colwidth', -1)
 username = os.environ.get('epiname')
 password = os.environ.get('epipass')
@@ -14,13 +15,17 @@ edit_login = "https://edit.citizensadvice.org.uk/login/?" + details
 
 
 def epi_pages_report():
+    path1 = os.path.dirname(os.path.abspath(__file__))
+    parentPath = os.path.dirname(path1)
+
     epi_login = edit_login
     public = "https://edit.citizensadvice.org.uk/api/reports/section.csv?root=6_242750"
     advisernet = "https://edit.citizensadvice.org.uk/api/reports/section.csv?root=36473_242727"
     public = makeFrame(public)
     adviser = makeFrame(advisernet)
-    public.to_pickle("../store/public.pkl")
-    adviser.to_pickle("../store/adviser.pkl")
+    public.to_pickle(os.path.join(parentPath,"store","public.pkl"))
+    #public.to_pickle("../store/public.pkl")
+    #adviser.to_pickle("../store/adviser.pkl")
 
 
 def makeFrame(link):

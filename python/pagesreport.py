@@ -13,14 +13,14 @@ import pandas_gbq
 
 def pages():
     path1 = os.path.dirname(os.path.realpath(__file__))
-    parentPath = Path(path1).parent
+    parentPath = os.path.dirname(path1)
     type = sys.argv[1]
 
     frame = pd.read_pickle("../store/"+type + ".pkl")
     length = frame.shape[0]
 
     KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
-    credentials = service_account.Credentials.from_service_account_file(KEY_FILE_LOCATION_BQ)
+    credentials = service_account.Credentials.from_service_account_file(KEY_FILE_LOCATION)
 
 
     strCols = frame.select_dtypes(include = ['object'])
