@@ -17,7 +17,7 @@ def get_report():
     parentPath = Path(path1).parent
 
     SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-    KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
+    KEY_FILE_LOCATION = os.path.join(str(parentPath),"creds","backlogger_bq.json")
 
     VIEW_ID_DICT = {
         'Advisernet':'ga:91978884',
