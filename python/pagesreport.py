@@ -22,13 +22,8 @@ def pages():
     KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
     credentials = service_account.Credentials.from_service_account_file(KEY_FILE_LOCATION)
 
-
     strCols = frame.select_dtypes(include = ['object'])
     frame[strCols.columns] = strCols.apply(lambda x: x.astype('str'))
-    print(frame.dtypes)
-
-
-
 
     i = 0
     j = 5000
@@ -36,7 +31,7 @@ def pages():
     while i < length:
         out = frame.iloc[i:j]
         out.to_gbq('pagesreport.pagesreport'+type, 'hardy-album-169409',
-                   if_exists = 'append', private_key=KEY_FILE_LOCATION_BQ)
+                   if_exists = 'append', private_key=KEY_FILE_LOCATION)
 
         time.sleep(60)
 
