@@ -8,107 +8,141 @@ import pandas_gbq
 from pathlib import Path
 import os
 import sys
-
+import logging
 
 
 def get_report():
 
-    path1 = os.path.dirname(os.path.realpath(__file__))
-    parentPath = os.path.dirname(path1)
+    # Create a custom logger
+    logger = logging.getLogger(__name__)
 
-    SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-    KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
+    # Create handlers
+    c_handler = logging.StreamHandler()
+    f_handler = logging.FileHandler('backlogger.log')
+    c_handler.setLevel(logging.WARNING)
+    f_handler.setLevel(logging.ERROR)
 
-    VIEW_ID_DICT = {
-        'Advisernet':'ga:91978884',
-        'All':'ga:77768373',
-        'Public':'ga:93356290'
+    # Create formatters and add it to handlers
+    c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+    f_format = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    c_handler.setFormatter(c_format)
+    f_handler.setFormatter(f_format)
+
+    # Add handlers to the logger
+    logger.addHandler(c_handler)
+    logger.addHandler(f_handler)
+
+    try:
+
+
+
+        path1 = os.path.dirname(os.path.realpath(__file__))
+        parentPath = os.path.dirname(path1)
+
+        SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
+        KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
+
+        VIEW_ID_DICT = {
+            'Advisernet':'ga:91978884',
+            'All':'ga:77768373',
+            'Public':'ga:93356290'
+            }
+
+        VIEW_ID = VIEW_ID_DICT[sys.argv[1]]
+
+
+        rating_body = {
+        'reportRequests': [
+        {
+          'viewId': VIEW_ID,
+          'dateRanges': [{'startDate': '90daysAgo', 'endDate': 'yesterday'}],
+          'metrics': [{'expression': 'ga:totalEvents'}],
+          'dimensions': [
+              {'name': 'ga:eventLabel'},
+              {'name': 'ga:pagePath'}],
+          'filtersExpression': ('ga:dimension2!~Start|index;'
+            'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?;'
+            'ga:eventCategory=~pageRating'),
+          'orderBys': [{'fieldName': 'ga:totalEvents', 'sortOrder': 'DESCENDING'}],
+          'pageSize': 10000
+        }]
         }
 
-    VIEW_ID = VIEW_ID_DICT[sys.argv[1]]
-
-
-    rating_body = {
-    'reportRequests': [
-    {
-      'viewId': VIEW_ID,
-      'dateRanges': [{'startDate': '90daysAgo', 'endDate': 'yesterday'}],
-      'metrics': [{'expression': 'ga:totalEvents'}],
-      'dimensions': [
-          {'name': 'ga:eventLabel'},
-          {'name': 'ga:pagePath'}],
-      'filtersExpression': ('ga:dimension2!~Start|index;'
-        'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?;'
-        'ga:eventCategory=~pageRating'),
-      'orderBys': [{'fieldName': 'ga:totalEvents', 'sortOrder': 'DESCENDING'}],
-      'pageSize': 10000
-    }]
-    }
-
-    size_body = {
-    'reportRequests': [
-    {
-      'viewId': VIEW_ID,
-      'dateRanges': [{'startDate': '90daysAgo', 'endDate': 'yesterday'}],
-      'metrics': [{'expression': 'ga:pageviews'}],
-      'dimensions': [
-          {'name': 'ga:pagePath'}],
-      'filtersExpression': ('ga:dimension2!~Start|index;'
-        'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?'),
-      'orderBys': [{'fieldName': 'ga:pageviews', 'sortOrder': 'DESCENDING'}],
-      'pageSize': 10000
-    }]
-    }
-
-    REPORT_TYPE = {
-        'Rating':rating_body,
-        'Size':size_body
+        size_body = {
+        'reportRequests': [
+        {
+          'viewId': VIEW_ID,
+          'dateRanges': [{'startDate': '90daysAgo', 'endDate': 'yesterday'}],
+          'metrics': [{'expression': 'ga:pageviews'}],
+          'dimensions': [
+              {'name': 'ga:pagePath'}],
+          'filtersExpression': ('ga:dimension2!~Start|index;'
+            'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?'),
+          'orderBys': [{'fieldName': 'ga:pageviews', 'sortOrder': 'DESCENDING'}],
+          'pageSize': 10000
+        }]
         }
 
-    report_body = REPORT_TYPE[sys.argv[2]]
+        REPORT_TYPE = {
+            'Rating':rating_body,
+            'Size':size_body
+            }
+
+        report_body = REPORT_TYPE[sys.argv[2]]
 
 
 
 
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(KEY_FILE_LOCATION, SCOPES)
-    analytics = build('analyticsreporting', 'v4', credentials=credentials)
+        credentials = ServiceAccountCredentials.from_json_keyfile_name(KEY_FILE_LOCATION, SCOPES)
+        analytics = build('analyticsreporting', 'v4', credentials=credentials)
 
-    response =  analytics.reports().batchGet(
-        body= report_body
-        ).execute()
+        response =  analytics.reports().batchGet(
+            body= report_body
+            ).execute()
 
-    df = pandafy(response)
-
-
-###########$#############################
-    # Upload to BigQuery
-    cols_dict = {
-    'Rating': {'ga:totalEvents':'totalEvents', 'ga:dimension6':'dimension6', 'ga:pagePath':'pagePath', 'ga:eventLabel':'eventLabel'},
-    'Size': {'ga:pageviews':'pageviews', 'ga:dimension6':'dimension6', 'ga:pagePath':'pagePath'}
-    }
+        df = pandafy(response)
 
 
-    cols = cols_dict[sys.argv[2]]
-
-    args = sys.argv[1] + sys.argv[2]
-
-    report_name_dict = {
-        'AdvisernetRating':'Backlogger.AN_Content_Rating',
-        'PublicRating':'Backlogger.Public_Content_Rating',
-        'AdvisernetSize':'Backlogger.AN_Content_Size',
-        'PublicSize':'Backlogger.Public_Content_Size'
+    ###########$#############################
+        # Upload to BigQuery
+        cols_dict = {
+        'Rating': {'ga:totalEvents':'totalEvents', 'ga:dimension6':'dimension6', 'ga:pagePath':'pagePath', 'ga:eventLabel':'eventLabel'},
+        'Size': {'ga:pageviews':'pageviews', 'ga:dimension6':'dimension6', 'ga:pagePath':'pagePath'}
         }
 
 
+        cols = cols_dict[sys.argv[2]]
 
-    report_name = report_name_dict[args]
+        args = sys.argv[1] + sys.argv[2]
+
+        report_name_dict = {
+            'AdvisernetRating':'Backlogger.AN_Content_Rating',
+            'PublicRating':'Backlogger.Public_Content_Rating',
+            'AdvisernetSize':'Backlogger.AN_Content_Size',
+            'PublicSize':'Backlogger.Public_Content_Size'
+            }
 
 
-    df2 = df.rename(index=str, columns=cols)
-    df2.to_gbq(report_name, 'hardy-album-169409',
-              if_exists = 'replace', private_key=KEY_FILE_LOCATION)
 
-    #print(df2)
+        report_name = report_name_dict[args]
+
+
+        df2 = df.rename(index=str, columns=cols)
+        df2.to_gbq(report_name, 'hardy-album-169409',
+                  if_exists = 'replace', private_key=KEY_FILE_LOCATION)
+
+
+    except ZeroDivisionError:
+        logging.error()
+
+    except Exception as ex:
+        logging.warning(ex, exc_info=True)
+        logging.error("Exception occurred", exc_info=True)
+
+    else:
+        print("all is well")
+
+
 
 
 #########################################
