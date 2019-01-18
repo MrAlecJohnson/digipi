@@ -7,6 +7,8 @@ import requests
 from datetime import datetime
 import os
 from pathlib import Path
+import logging
+
 pd.set_option('display.max_colwidth', -1)
 username = os.environ.get('epiname')
 password = os.environ.get('epipass')
@@ -24,6 +26,7 @@ def epi_pages_report():
     public = makeFrame(public)
     adviser = makeFrame(advisernet)
     public.to_pickle(os.path.join(parentPath,"store","public.pkl"))
+    adviser.to_pickle(os.path.join(parentPath,"store","adviser.pkl"))
     #public.to_pickle("../store/public.pkl")
     #adviser.to_pickle("../store/adviser.pkl")
 
@@ -61,51 +64,7 @@ def makeFrame(link):
         frame[strCols.columns] = strCols.apply(lambda x: x.str.replace('\n|\r', ' '))
         frame[strCols.columns] = strCols.apply(lambda x: x.astype('str'))
 
-        #schema(frame)
-
         return frame
-
-def schema (df):
-    df['Id'] = df['Id'],
-    df['Guid'] = df['Guid'].astype('str'),
-    df['Language'] = df['Language'].astype('str'),
-    df['IsTranslation'] = df['IsTranslation'].astype('bool'),
-    df['Name'] = df['Name'].astype('str'),
-    df['Template'] = df['Template'].astype('str'),
-    df['MainTitle'] = df['MainTitle'].astype('str'),
-    df['NavigationLabel'] = df['NavigationLabel'].astype('str'),
-    df['Description'] = df['Description'].astype('str'),
-    df['Keywords'] = df['Keywords'].astype('str'),
-    df['Status'] = df['Status'].astype('str'),
-    df['Changed'] = df['Changed'].astype('datetime64'),
-    df['StartPublish'] = df['StartPublish'].astype('datetime64'),
-    df['StopPublish'] = df['StopPublish'].astype('datetime64'),
-    df['Path'] = df['Path'].astype('str'),
-    df['SimpleUrl'] = df['SimpleUrl'].astype('str'),
-    df['ExtendCode'] = df['ExtendCode'].astype('str'),
-    df['EffectiveExtentCode'] = df['EffectiveExtentCode'].astype('str'),
-    df['IsPublic'] = df['IsPublic'].astype('bool'),
-    df['Shortcut'] = df['Shortcut'].astype('str'),
-    df['EditLink'] = df['EditLink'].astype('str'),
-    df['Owner'] = df['Owner'].astype('str'),
-    df['Editor'] = df['Editor'].astype('str'),
-    df['Creator'] = df['Creator'].astype('str'),
-    df['ReviewDate'] = df['ReviewDate'].astype('datetime64'),
-    df['Groups'] = df['Groups'].astype('str'),
-    df['OwnedByTeam'] = df['OwnedByTeam'].astype('str'),
-    df['ReportDate'] = df['ReportDate'].astype('datetime64'),
-    df['url'] = df['url'].astype('str'),
-    df['LastAccuracyReview'] = df['LastAccuracyReview'].astype('datetime64')
-
-    return df
-
-
-
-
-
-
-
-
 
 if __name__ == '__main__':
     epi_pages_report()
