@@ -40,7 +40,7 @@ def pages():
 
     os.remove("../store/"+type + ".pkl")
 
-    return "ran without error"
+    return 1
 
 
     #frame will need cleaning

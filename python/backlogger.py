@@ -128,7 +128,7 @@ def get_report():
         logging.error("Exception occurred", exc_info=True)
 
     else:
-        return "ran without error"
+        return 1
 
 
 
