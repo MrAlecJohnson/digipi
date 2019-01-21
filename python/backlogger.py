@@ -1,5 +1,4 @@
 # Pulls data from Analytics API and uploads it to BigQuery.
-# Recreates the 'AN_Content_Rating' table for Backlogger
 
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
@@ -33,8 +32,6 @@ def get_report():
     logger.addHandler(f_handler)
 
     try:
-
-
 
         path1 = os.path.dirname(os.path.realpath(__file__))
         parentPath = os.path.dirname(path1)
@@ -90,9 +87,6 @@ def get_report():
 
         report_body = REPORT_TYPE[sys.argv[2]]
 
-
-
-
         credentials = ServiceAccountCredentials.from_json_keyfile_name(KEY_FILE_LOCATION, SCOPES)
         analytics = build('analyticsreporting', 'v4', credentials=credentials)
 
@@ -110,9 +104,7 @@ def get_report():
         'Size': {'ga:pageviews':'pageviews', 'ga:dimension6':'dimension6', 'ga:pagePath':'pagePath'}
         }
 
-
         cols = cols_dict[sys.argv[2]]
-
         args = sys.argv[1] + sys.argv[2]
 
         report_name_dict = {
@@ -122,15 +114,11 @@ def get_report():
             'PublicSize':'Backlogger.Public_Content_Size'
             }
 
-
-
         report_name = report_name_dict[args]
-
 
         df2 = df.rename(index=str, columns=cols)
         df2.to_gbq(report_name, 'hardy-album-169409',
                   if_exists = 'replace', private_key=KEY_FILE_LOCATION)
-
 
     except ZeroDivisionError:
         logging.error()
