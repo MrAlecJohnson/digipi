@@ -27,8 +27,8 @@ def epi_pages_report():
     adviser = makeFrame(advisernet)
     public.to_pickle(os.path.join(parentPath,"store","public.pkl"))
     adviser.to_pickle(os.path.join(parentPath,"store","adviser.pkl"))
-    #public.to_pickle("../store/public.pkl")
-    #adviser.to_pickle("../store/adviser.pkl")
+
+    return "ran without error"
 
 
 def makeFrame(link):
