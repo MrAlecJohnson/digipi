@@ -1,5 +1,7 @@
 # Pulls data from Analytics API and uploads it to BigQuery.
 
+#TODO if no arguments are passed, then request an input from the user
+
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
@@ -56,7 +58,8 @@ def get_report():
           'metrics': [{'expression': 'ga:totalEvents'}],
           'dimensions': [
               {'name': 'ga:eventLabel'},
-              {'name': 'ga:pagePath'}],
+              {'name': 'ga:pagePath'},
+              {'name': 'ga:dimension6'}],
           'filtersExpression': ('ga:dimension2!~Start|index;'
             'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?;'
             'ga:eventCategory=~pageRating'),
@@ -72,7 +75,8 @@ def get_report():
           'dateRanges': [{'startDate': '90daysAgo', 'endDate': 'yesterday'}],
           'metrics': [{'expression': 'ga:pageviews'}],
           'dimensions': [
-              {'name': 'ga:pagePath'}],
+              {'name': 'ga:pagePath'},
+              {'name': 'ga:dimension6'}],
           'filtersExpression': ('ga:dimension2!~Start|index;'
             'ga:pagePath!~/about-us/|/local/|/resources-and-tools/|\?'),
           'orderBys': [{'fieldName': 'ga:pageviews', 'sortOrder': 'DESCENDING'}],
@@ -119,6 +123,7 @@ def get_report():
         df2 = df.rename(index=str, columns=cols)
         df2.to_gbq(report_name, 'hardy-album-169409',
                   if_exists = 'replace', private_key=KEY_FILE_LOCATION)
+
 
     except ZeroDivisionError:
         logging.error()
