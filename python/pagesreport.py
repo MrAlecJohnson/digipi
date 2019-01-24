@@ -15,8 +15,9 @@ def pages():
     path1 = os.path.dirname(os.path.realpath(__file__))
     parentPath = os.path.dirname(path1)
     type = sys.argv[1]
+    store = os.path.join(parentPath,"store")
 
-    frame = pd.read_pickle("../store/"+type + ".pkl")
+    frame = pd.read_pickle(store+type + ".pkl")
     length = frame.shape[0]
 
     KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
