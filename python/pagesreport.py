@@ -40,7 +40,7 @@ def pages():
         i = j
         j = j+5000
 
-    os.remove("../store/"+type + ".pkl")
+    os.remove(file)
 
     return 1
 
