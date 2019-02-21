@@ -1,0 +1,51 @@
+#!/usr/local/bin/python3
+
+import subprocess, sys, os, re, argparse
+from logging import getLogger
+from os.path import isfile, isdir, abspath, normpath, dirname, join, basename
+
+BLACKLIST = [
+    b'BEGIN RSA PRIVATE KEY',
+    b'BEGIN DSA PRIVATE KEY',
+    b'BEGIN EC PRIVATE KEY',
+    b'BEGIN OPENSSH PRIVATE KEY',
+    b'BEGIN PRIVATE KEY',
+    b'PuTTY-User-Key-File-2',
+    b'BEGIN SSH2 ENCRYPTED PRIVATE KEY',
+    b'BEGIN PGP PRIVATE KEY BLOCK',
+]
+
+def detect_private_key(filename):
+    log = getLogger(basename(__file__))
+
+    private_key_files = []
+
+    with open(filename, 'rb') as f:
+        content = f.read()
+        if any(line in content for line in BLACKLIST):
+            private_key_files.append(filename)
+
+    if private_key_files:
+        for private_key_file in private_key_files:
+            log.warning('Private key found: {}'.format(private_key_file))
+            sys.exit(1)
+    else:
+        return 0
+
+def main():
+    log = getLogger(basename(__file__))
+    files = sys.argv[1:]
+    for file in files:
+    # Now, do the checking:
+        try:
+            detect_private_key(file)
+            log.info("No badness found")
+            return 0
+
+        except subprocess.CalledProcessError:
+        	# There was a problem calling "git status".
+        	log.info("Oops...")
+        	sys.exit(12)
+
+if __name__ == '__main__':
+    main()
