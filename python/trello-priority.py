@@ -13,8 +13,7 @@ import requests
 import json
 
 # Key and token from Trello - both needed for authentication
-myKey = 'ed412b36aa6d0d595b6f824986a4d416'
-myToken = 'f5bed0e552f3c40c43e502ae3226616c83ba37b2b497d224c940308c2b93c0e8'
+
 
 # ID of the 'Maintenance backlog' board
 board = '5541fead2c739608a8898ebe'
