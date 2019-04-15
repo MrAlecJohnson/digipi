@@ -55,14 +55,6 @@ def getCards(lst):
     response = requests.get(url, params = payload)
     return response.json()
 
-def getDates(lst):
-    """get json of cards from a specific list"""
-    url = "https://api.trello.com/1/lists/" + lst + "/cards"
-    payload = {'key': myKey, 'token': myToken, 'fields': ['name', 'idList', 'url', 'due']}
-    response = requests.get(url, params = payload)
-    return response.json()
-
-
 def labeller(card, priority):
     """apply a label to a card"""
     url = "https://api.trello.com/1/cards/" + card['id'] + "/idLabels"
@@ -133,9 +125,8 @@ def checkPriority(column, badCards):
                     badCards.append(str("Nonstandard priority label: " + card['url']))
 
 def checkDates(column, badCards):
-    """Look through a column for priority label problems"""
-    # Could later refactor to reduce code reuse between this and checkPriority
-    cards = getDates(column)
+    """Look through a column for tickets missing a due date"""
+    cards = getCards(column)
     for card in cards:
         # ignore the blank admin tickets
         if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
@@ -145,16 +136,18 @@ def checkDates(column, badCards):
                 badCards.append(str("No due date: " + card['url']))
 
 def checkSize(column, badCards):
-    """Look through a column for priority label problems"""
-    # Could later refactor to reduce code reuse between this and checkPriority
-    cards = getCards(column)
+    """Look through a column for cards with no sizing"""
+    url = "https://api.trello.com/1/lists/" + column + "/cards?pluginData=true"
+    payload = {'key': myKey, 'token': myToken, 'fields': ['name', 'pluginData', 'url']}
+    response = requests.get(url, params = payload)
+    cards = response.json()
     for card in cards:
         # ignore the blank admin tickets
         if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
             person = '@' + str(identifier(card))
-            if card['due'] is None:
-                #commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
-                badCards.append(str("No due date: " + card['url']))
+            if not card['pluginData']:
+                #commenter(card, person + " Please could you size this card? Thanks!" + signature)
+                badCards.append(str("Not sized: " + card['url']))
 
 
 
@@ -172,6 +165,10 @@ def begin():
             for column in prioritised:
                 checkDates(column, badCards)
                 
+        elif str(sys.argv[1]) == 'size':
+            for column in prioritised:
+                checkSize(column, badCards)
+                
         else:
             print("Command line option not found - please use 'priority' or 'date'")
             
@@ -183,7 +180,6 @@ def begin():
     # The admin ticket is at https://trello.com/c/BJSsaiRh/2712-automated-reports-on-cards-with-priority-label-errors
     if badCards:
         todo = len(badCards)
-        print(todo)
         start = 0
         finish = 30
         while todo > 30:
@@ -191,7 +187,6 @@ def begin():
             url = "https://api.trello.com/1/cards/5c66a8959e872641c7a6f5bc/actions/comments"
             payload = {"key": myKey, "token": myToken, "text": report}
             response = requests.request("POST", url, params=payload)
-            print(response)
             start += 30
             finish += 30
             todo -= 30
@@ -201,6 +196,7 @@ def begin():
         payload = {"key": myKey, "token": myToken, "text": report}
         response = requests.request("POST", url, params=payload)
 
+    #print("\n\n".join(badCards))
 
 if __name__ == "__main__":
     begin()
