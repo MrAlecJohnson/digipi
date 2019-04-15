@@ -11,11 +11,19 @@ It makes a comment on an admin ticket summarising the changes
 
 import requests
 import json
+import sys
 
 # Key and token from Trello - both needed for authentication
-with open('/home/pi/GitRepos/digipi/creds/trello.env', 'r') as f:
+# Once live
+"""with open('/home/pi/GitRepos/digipi/creds/trello.env', 'r') as f:
+    myKey = f.readline().rstrip('\n')
+    myToken = f.readline().rstrip('\n')"""
+
+#For local testing
+with open('/Users/alec/Python/Trello/trello.env', 'r') as f:
     myKey = f.readline().rstrip('\n')
     myToken = f.readline().rstrip('\n')
+
 
 # ID of the 'Maintenance backlog' board
 board = '5541fead2c739608a8898ebe'
@@ -43,9 +51,17 @@ signature = "\n\nYours inhumanly, Botty McBotFace \n\n (I'm not actually Alec, I
 def getCards(lst):
     """get json of cards from a specific list"""
     url = "https://api.trello.com/1/lists/" + lst + "/cards"
-    payload = {'key': myKey, 'token': myToken, 'fields': ['name','labels', 'idList', 'url']}
+    payload = {'key': myKey, 'token': myToken, 'fields': ['name','labels', 'idList', 'url', 'due']}
     response = requests.get(url, params = payload)
     return response.json()
+
+def getDates(lst):
+    """get json of cards from a specific list"""
+    url = "https://api.trello.com/1/lists/" + lst + "/cards"
+    payload = {'key': myKey, 'token': myToken, 'fields': ['name', 'idList', 'url', 'due']}
+    response = requests.get(url, params = payload)
+    return response.json()
+
 
 def labeller(card, priority):
     """apply a label to a card"""
@@ -76,14 +92,14 @@ def identifier(card):
     response = requests.request("GET", url, params=payload)
     return json.loads(response.text)[-1]['memberCreator']['username']
 
-def checkCards(column, badCards):
+def checkPriority(column, badCards):
     """Look through a column for priority label problems"""
     cards = getCards(column)
     for card in cards:
         # ignore the blank admin tickets
         if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
             person = '@' + str(identifier(card))
-            # Get just the pink labels, as they're the ones for marking priority
+            # Get just the pink labels, as they're the ones for marking priority
             labels = [label['name'] for label in card['labels'] if label['color'] == 'pink']
 
             # add a label to a card that doesn't have one
@@ -91,7 +107,6 @@ def checkCards(column, badCards):
                 labeller(card, labelDict[card['idList']])
                 commenter(card, person + " This had no priority label, so I've added one. Please can you check it's right? Thanks!" + signature)
                 badCards.append(str("No priority label: " + card['url']))
-                #noLabels += 1
 
             # remove labels if there are more than one, then add one matching column
             elif len(labels) > 1:
@@ -99,44 +114,89 @@ def checkCards(column, badCards):
                 labeller(card, labelDict[card['idList']])
                 commenter(card, person + " This had more than one priority label. I've removed the one that didn't match the priority list, but please can you check? Thanks!" + signature)
                 badCards.append(str("More than 1 priority label: " + card['url']))
-                #bonusLabels += 1
 
             else:
                 try:
                     # If the label doesn't match the column, remove it and add the right one
-                    # Only works if the label matches one of the 4 standard priority ones
+                    # Only works if the label matches one of the 4 standard priority ones
                     if priorityDict[labels[0]] != card['idList']:
                         unlabeller(card)
                         labeller(card, labelDict[card['idList']])
                         commenter(card, person + " This card's priority label didn't match the list it's in. I've changed the label to match the list, but please can you check this is right? Thanks!" + signature)
                         badCards.append(str("Priority label didn't match list: " + card['url']))
-                        #wrongLabels += 1
 
-                # If the label is pink but not one fo the 4 standard priority labels, fix it
+                # If the label is pink but not one of the 4 standard priority labels, fix it
                 except KeyError:
                     unlabeller(card)
                     labeller(card, labelDict[card['idList']])
                     commenter(card, person + " The priority label on this card was weird. I've changed the label to a standard one, but please can you check? Thanks!" + signature)
                     badCards.append(str("Nonstandard priority label: " + card['url']))
-                    #wrongLabels += 1
+
+def checkDates(column, badCards):
+    """Look through a column for priority label problems"""
+    # Could later refactor to reduce code reuse between this and checkPriority
+    cards = getDates(column)
+    for card in cards:
+        # ignore the blank admin tickets
+        if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
+            person = '@' + str(identifier(card))
+            if card['due'] is None:
+                #commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
+                badCards.append(str("No due date: " + card['url']))
+
+def checkSize(column, badCards):
+    """Look through a column for priority label problems"""
+    # Could later refactor to reduce code reuse between this and checkPriority
+    cards = getCards(column)
+    for card in cards:
+        # ignore the blank admin tickets
+        if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
+            person = '@' + str(identifier(card))
+            if card['due'] is None:
+                #commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
+                badCards.append(str("No due date: " + card['url']))
 
 
+
+"""REDO THIS SO IT JUST CHECKS IF IT'S MONDAY RATHER THAN USING ARGV"""
 def begin():
     """Runs the checker and adds summary to admin ticket"""
-    # Unused problem counting variables
-    noLabels = 0
-    wrongLabels = 0
-    bonusLabels = 0
-
     #run the check on each priority column, and add problem cards to a single list
     badCards = []
-    for column in prioritised:
-        checkCards(column, badCards)
+    try:
+        if str(sys.argv[1]) == 'priority':
+            for column in prioritised:
+                checkPriority(column, badCards)
+                
+        elif str(sys.argv[1]) == 'date':
+            for column in prioritised:
+                checkDates(column, badCards)
+                
+        else:
+            print("Command line option not found - please use 'priority' or 'date'")
+            
+    except IndexError:
+        print("Please include a command line parameter saying what to check for.")
+        print("Currently takes 'priority' and 'date'")        
 
     # If problem cards found, write a summary of changes on the admin ticket
     # The admin ticket is at https://trello.com/c/BJSsaiRh/2712-automated-reports-on-cards-with-priority-label-errors
     if badCards:
-        report = "\n\n".join(badCards)
+        todo = len(badCards)
+        print(todo)
+        start = 0
+        finish = 30
+        while todo > 30:
+            report = "\n\n".join(badCards[start:finish])
+            url = "https://api.trello.com/1/cards/5c66a8959e872641c7a6f5bc/actions/comments"
+            payload = {"key": myKey, "token": myToken, "text": report}
+            response = requests.request("POST", url, params=payload)
+            print(response)
+            start += 30
+            finish += 30
+            todo -= 30
+            
+        report = "\n\n".join(badCards[start:])
         url = "https://api.trello.com/1/cards/5c66a8959e872641c7a6f5bc/actions/comments"
         payload = {"key": myKey, "token": myToken, "text": report}
         response = requests.request("POST", url, params=payload)
