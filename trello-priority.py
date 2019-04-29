@@ -15,14 +15,14 @@ import datetime
 
 # Key and token from Trello - both needed for authentication
 # Once live
-"""with open('/home/pi/GitRepos/digipi/creds/trello.env', 'r') as f:
-    myKey = f.readline().rstrip('\n')
-    myToken = f.readline().rstrip('\n')"""
-
-#For local testing
-with open('/Users/alec/Python/Trello/trello.env', 'r') as f:
+with open('/home/pi/GitRepos/digipi/creds/trello.env', 'r') as f:
     myKey = f.readline().rstrip('\n')
     myToken = f.readline().rstrip('\n')
+
+#For local testing
+"""with open('/Users/alec/Python/Trello/trello.env', 'r') as f:
+    myKey = f.readline().rstrip('\n')
+    myToken = f.readline().rstrip('\n')"""
 
 # ID of the 'Maintenance backlog' board
 board = '5541fead2c739608a8898ebe'
@@ -85,26 +85,27 @@ def identifier(card):
 
 def checkAll(column, badCards):
     """Look through a column for porblems with cards. Always checks for
-    priority labels and fixes them if wrong or missing. On Mondays, also 
+    priority labels and fixes them if wrong or missing. On Mondays, also
     checks that cards are sized and have due dates."""
     cards = getCards(column)
     day = datetime.datetime.today().weekday() # day of week as integer
-    
+
     for card in cards:
         # ignore the blank admin tickets
         if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
             person = '@' + str(identifier(card)) # card owner to @ when replying
-            
-            if day == 0: # if it's Monday
+
+            # Leaving this part switched off for now
+            """if day == 0: # if it's Monday
                 #CHECK DATES
                 if card['due'] is None:
                     #commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
                     badCards['date'].append(str("No due date: " + card['url']))
-                    
+
                 #CHECK SIZE
                 if not card['pluginData']:
                     #commenter(card, person + " Please could you size this card? Thanks!" + signature)
-                    badCards['size'].append(str("Not sized: " + card['url']))
+                    badCards['size'].append(str("Not sized: " + card['url']))"""
 
             #CHECK PRIORITY
             # Get just the pink labels, as they're the ones for marking priority
@@ -146,7 +147,7 @@ def begin():
     badCards = {'date': [], 'priority': [], 'size': []}
     for column in prioritised:
         checkAll(column, badCards)
-                
+
     # If problem cards found, write a summary of changes on the admin ticket
     # The admin ticket is at https://trello.com/c/BJSsaiRh/2712-automated-reports-on-cards-with-priority-label-errors
     # Split into batches of 30 as there's a length limit on Trello comments
@@ -162,7 +163,7 @@ def begin():
             start += 30
             finish += 30
             todo -= 30
-            
+
         # Final comment for any left over after the batches of 30
         report = "\n\n".join(lst[start:])
         url = "https://api.trello.com/1/cards/5c66a8959e872641c7a6f5bc/actions/comments"
