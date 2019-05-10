@@ -1,11 +1,15 @@
-"""This script checks that tickets in the backlog have an appropriate priority label
-It looks for:
+"""This script checks that tickets in the backlog have appropriate priority labels
+For priority labels, it looks for:
 - tickets with multiple priority labels
 - tickets with no priority label
 - tickets with a priority label that doesn't match their column
 - tickets with a priority label that isn't one of the standard ones
 If it finds a problem it corrects the label and sends a message to the person who made the ticket
 It makes a comment on an admin ticket summarising the changes
+
+Once a week it also checks that tickets have sizes and due dates.
+If they don't, it leaves a message for the ticket owner
+It mentions this on the admin ticket as well
 
 """
 
@@ -84,7 +88,7 @@ def identifier(card):
     return json.loads(response.text)[-1]['memberCreator']['username']
 
 def checkAll(column, badCards):
-    """Look through a column for porblems with cards. Always checks for
+    """Look through a column for problems with cards. Always checks for
     priority labels and fixes them if wrong or missing. On Mondays, also
     checks that cards are sized and have due dates."""
     cards = getCards(column)
@@ -96,16 +100,16 @@ def checkAll(column, badCards):
             person = '@' + str(identifier(card)) # card owner to @ when replying
 
             # Leaving this part switched off for now
-            """if day == 0: # if it's Monday
+            if day == 0: # if it's Monday
                 #CHECK DATES
                 if card['due'] is None:
-                    #commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
+                    commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
                     badCards['date'].append(str("No due date: " + card['url']))
 
                 #CHECK SIZE
                 if not card['pluginData']:
-                    #commenter(card, person + " Please could you size this card? Thanks!" + signature)
-                    badCards['size'].append(str("Not sized: " + card['url']))"""
+                    commenter(card, person + " Please could you size this card? Thanks!" + signature)
+                    badCards['size'].append(str("Not sized: " + card['url']))
 
             #CHECK PRIORITY
             # Get just the pink labels, as they're the ones for marking priority
@@ -150,19 +154,19 @@ def begin():
 
     # If problem cards found, write a summary of changes on the admin ticket
     # The admin ticket is at https://trello.com/c/BJSsaiRh/2712-automated-reports-on-cards-with-priority-label-errors
-    # Split into batches of 30 as there's a length limit on Trello comments
+    # Split into batches of 25 as there's a length limit on Trello comments
     for lst in badCards.values():
         todo = len(lst)
         start = 0
-        finish = 30
-        while todo > 30:
+        finish = 25
+        while todo > 25:
             report = "\n\n".join(lst[start:finish])
             url = "https://api.trello.com/1/cards/5c66a8959e872641c7a6f5bc/actions/comments"
             payload = {"key": myKey, "token": myToken, "text": report}
             response = requests.request("POST", url, params=payload)
-            start += 30
-            finish += 30
-            todo -= 30
+            start += 25
+            finish += 25
+            todo -= 25
 
         # Final comment for any left over after the batches of 30
         report = "\n\n".join(lst[start:])
