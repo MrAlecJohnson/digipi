@@ -99,15 +99,15 @@ def checkAll(column, badCards):
         if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
             person = '@' + str(identifier(card)) # card owner to @ when replying
 
-            # Leaving this part switched off for now
-            if day == 0: # if it's Monday
+            # This is the part that checks due dates and sizes
+            if day == 0: # if it's Monday - otherwise doesn't run
                 #CHECK DATES
                 if card['due'] is None:
                     commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
                     badCards['date'].append(str("No due date: " + card['url']))
 
                 #CHECK SIZE
-                if not card['pluginData']:
+                if not card['pluginData']: # This is where the sizing data lives
                     commenter(card, person + " Please could you size this card? Thanks!" + signature)
                     badCards['size'].append(str("Not sized: " + card['url']))
 
