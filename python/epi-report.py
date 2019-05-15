@@ -55,11 +55,11 @@ def makeFrame(link):
         frame.loc[frame['LastAccuracyReview'] == '01/01/0001 00:00:00','LastAccuracyReview'] = None
         frame.loc[frame['ReviewDate'] == '01/01/0001 00:00:00','ReviewDate'] = None
         frame['ReportDate'] = pd.to_datetime(frame['ReportDate'], errors = 'ignore', yearfirst = True)
-        frame['StopPublish'] = pd.to_datetime(frame['StopPublish'], errors = 'ignore')
-        frame['StartPublish'] = pd.to_datetime(frame['StartPublish'], errors = 'ignore')
-        frame['Changed'] = pd.to_datetime(frame['Changed'], errors = 'ignore')
-        frame['ReviewDate'] = pd.to_datetime(frame['ReviewDate'], errors = 'ignore')
-        frame['LastAccuracyReview'] = pd.to_datetime(frame['LastAccuracyReview'], errors = 'ignore')
+        frame['StopPublish'] = pd.to_datetime(frame['StopPublish'], errors = 'ignore', dayfirst = True)
+        frame['StartPublish'] = pd.to_datetime(frame['StartPublish'], errors = 'ignore', dayfirst = True)
+        frame['Changed'] = pd.to_datetime(frame['Changed'], errors = 'ignore', dayfirst = True)
+        frame['ReviewDate'] = pd.to_datetime(frame['ReviewDate'], errors = 'ignore', dayfirst = True)
+        frame['LastAccuracyReview'] = pd.to_datetime(frame['LastAccuracyReview'], errors = 'ignore', dayfirst = True)
         strCols = frame.select_dtypes(include = ['object'])
         frame[strCols.columns] = strCols.apply(lambda x: x.str.replace('\n|\r', ' '))
         frame[strCols.columns] = strCols.apply(lambda x: x.astype('str'))
