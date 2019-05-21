@@ -28,6 +28,8 @@ def epi_pages_report():
     public.to_pickle(os.path.join(parentPath,"store","public.pkl"))
     adviser.to_pickle(os.path.join(parentPath,"store","adviser.pkl"))
 
+    adviser.to_csv(os.path.join(parentPath,"store","adviser.csv"))
+
     return 1
 
 

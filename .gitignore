@@ -120,3 +120,4 @@ store/**
 # files in creds
 creds/**
 *.json
+store/**
