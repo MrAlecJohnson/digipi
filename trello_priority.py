@@ -39,13 +39,13 @@ urgent = '59b00377db3253f74f06b79b'
 prioritised = [low, medium, high, urgent]
 
 # Dictionary matching priority columns to their IDs
-priorityDict = {'priority: urgent': '59b00377db3253f74f06b79b', 'priority: high': '57cfe53449efb84da1c2625b',
-              'priority: medium': '59ba4d02354c28ed20976905', 'priority: low': '59afb8fed016a6e6416aa34d'}
+priorityDict = {'priority: urgent': urgent, 'priority: high': high,
+              'priority: medium': medium, 'priority: low': low}
 
 # Dictionary matching priority column IDs to the relevant priority label IDs
 # eg the first entry's key is the urgent column ID and its value is the urgent label ID
-labelDict = {'59b00377db3253f74f06b79b': '59ba50454ea0be4e74964ad0', '57cfe53449efb84da1c2625b': '565835b7ff1468f0e77d01f9',
-              '59ba4d02354c28ed20976905': '59ba50660d7ac45898c20568', '59afb8fed016a6e6416aa34d': '59ba50755a0cafbfaa4248f3'}
+labelDict = {urgent: '59ba50454ea0be4e74964ad0', high: '565835b7ff1468f0e77d01f9',
+              medium: '5d2db44542adf6416ccb10a4', low: '5d2db44b1535fb1cc9c3a06d'}
 
 # Sign the comment to make clear it's automated, not Alec being a busybody
 signature = "\n\nYours inhumanly, Botty McBotFace \n\n (I'm not actually Alec, I just share his face)"
