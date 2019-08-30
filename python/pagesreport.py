@@ -21,7 +21,7 @@ def pages():
     frame = pd.read_pickle(file)
     length = frame.shape[0]
 
-    KEY_FILE_LOCATION = 'os.path.join(parentPath,"creds","backlogger_bq.json")'
+    KEY_FILE_LOCATION = os.path.join(parentPath,"creds","backlogger_bq.json")
     credentials = service_account.Credentials.from_service_account_file(KEY_FILE_LOCATION)
 
     strCols = frame.select_dtypes(include = ['object'])
