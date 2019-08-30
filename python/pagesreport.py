@@ -7,7 +7,7 @@ import sys
 import time
 from pathlib import Path
 from google.oauth2 import service_account
-#import pandas_gbq
+import pandas_gbq
 
 # get file, upload file, delete file
 
@@ -15,13 +15,13 @@ from google.oauth2 import service_account
 def pages():
     path1 = os.path.dirname(os.path.realpath(__file__))
     parentPath = os.path.dirname(path1)
-    type = 'adviser'
+    type = sys.argv[1]
     file = os.path.join(parentPath,"store",type + ".pkl")
 
     frame = pd.read_pickle(file)
     length = frame.shape[0]
 
-    KEY_FILE_LOCATION = '/Users/alec/Python/KEYS/client_secrets.json'
+    KEY_FILE_LOCATION = 'os.path.join(parentPath,"creds","backlogger_bq.json")'
     credentials = service_account.Credentials.from_service_account_file(KEY_FILE_LOCATION)
 
     strCols = frame.select_dtypes(include = ['object'])
