@@ -46,8 +46,11 @@ def makeFrame(link):
     ])
     with requests.Session() as login:
         login.get(edit_login)
-        getting = login.get(link, stream = True).text
-        sheet = StringIO(getting)
+        # wrapping next line in a 'with' statement to hopefully reduce failures
+        # makes requests release the connection properly when stream = True
+        with login.get(link, stream = True) as getting:
+            sheet = StringIO(getting.text)
+
         frame = pd.read_csv(sheet)
 
         frame['ReportDate'] = today
