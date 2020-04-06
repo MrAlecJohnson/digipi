@@ -27,7 +27,8 @@ with open('/home/pi/GitRepos/digipi/creds/trello.env', 'r') as f:
 #For local testing
 """with open('/Users/alec/Python/KEYS/trello.env', 'r') as f:
     myKey = f.readline().rstrip('\n')
-    myToken = f.readline().rstrip('\n')"""
+    myToken = f.readline().rstrip('\n')
+"""
 
 # ID of the 'Maintenance backlog' board
 board = '5541fead2c739608a8898ebe'
