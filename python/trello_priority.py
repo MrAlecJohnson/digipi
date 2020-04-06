@@ -19,12 +19,13 @@ import datetime
 
 # Key and token from Trello - both needed for authentication
 # Once live
+# USES ALEC'S TRELLO - WILL NEED CHANGING WHEN I LEAVE
 with open('/home/pi/GitRepos/digipi/creds/trello.env', 'r') as f:
     myKey = f.readline().rstrip('\n')
     myToken = f.readline().rstrip('\n')
 
 #For local testing
-"""with open('/Users/alec/Python/Trello/trello.env', 'r') as f:
+"""with open('/Users/alec/Python/KEYS/trello.env', 'r') as f:
     myKey = f.readline().rstrip('\n')
     myToken = f.readline().rstrip('\n')"""
 
@@ -39,123 +40,149 @@ urgent = '59b00377db3253f74f06b79b'
 prioritised = [low, medium, high, urgent]
 
 # Dictionary matching priority columns to their IDs
-priorityDict = {'priority: urgent': urgent, 'priority: high': high,
+priority_dict = {'priority: urgent': urgent, 'priority: high': high,
               'priority: medium': medium, 'priority: low': low}
 
 # Dictionary matching priority column IDs to the relevant priority label IDs
 # eg the first entry's key is the urgent column ID and its value is the urgent label ID
-labelDict = {urgent: '59ba50454ea0be4e74964ad0', high: '565835b7ff1468f0e77d01f9',
+label_dict = {urgent: '59ba50454ea0be4e74964ad0', high: '565835b7ff1468f0e77d01f9',
               medium: '5d2db44542adf6416ccb10a4', low: '5d2db44b1535fb1cc9c3a06d'}
 
 # Sign the comment to make clear it's automated, not Alec being a busybody
 signature = "\n\nYours inhumanly, Botty McBotFace \n\n (I'm not actually Alec, I just share his face)"
 
 # Functions for doing things on Trello
-def getCards(lst):
-    """get json of cards from a specific list"""
-    url = "https://api.trello.com/1/lists/" + lst + "/cards?pluginData=true"
-    payload = {'key': myKey, 'token': myToken, 'fields': ['name','labels', 'idList', 'url', 'due', 'pluginData']}
-    response = requests.get(url, params = payload)
+def get_cards(list_id):
+    """get json of cards from a specific list, with specific fields for each card. 
+
+    pluginData is needed to get the ticket sizes, which are from a Trello powerup
+    """
+    url = f"https://api.trello.com/1/lists/{list_id}/cards?pluginData=true"
+    payload = {
+        'key': myKey, 
+        'token': myToken, 
+        'fields': ['name','labels', 'idList', 'url', 'due', 'pluginData']
+        }
+    response = requests.get(url, params=payload)
     return response.json()
 
-def labeller(card, priority):
-    """apply a label to a card"""
-    url = "https://api.trello.com/1/cards/" + card['id'] + "/idLabels"
-    payload = {"key": myKey, "token": myToken, "value": priority}
+def add_label(card, priority):
+    """apply a label to a card. Pass it a card's json and the id of the label you want to add
+    """
+    url = f"https://api.trello.com/1/cards/{card['id']}/idLabels"
+    payload = {
+        "key": myKey, 
+        "token": myToken, 
+        "value": priority
+        }
     response = requests.request("POST", url, params=payload)
 
-def unlabeller(card):
-    """remove priority-coloured labels from a card
-    use in conjunction with labeller to remove wronguns then add the right one"""
+def remove_priority_labels(card):
+    """removes all priority-coloured labels from a card
+    use in conjunction with add_label: first remove all priority labels, then add the correct one"""
     for label in card['labels']:
-        if label['color'] == 'pink':
-            url = "https://api.trello.com/1/cards/" + card['id'] + "/idLabels/" + label['id']
+        if label['color'] == 'pink': # priority labels are pink
+            url = f"https://api.trello.com/1/cards/{card['id']}/idLabels/{label['id']}"
             payload = {"key": myKey, "token": myToken}
             response = requests.request("DELETE", url, params=payload)
 
-def commenter(card, text):
-    """add a comment to a card"""
-    url = "https://api.trello.com/1/cards/" + card['id'] + "/actions/comments"
-    payload = {"key": myKey, "token": myToken, "text": text}
+def add_comment(card, text):
+    """Pass this the json of a card, and the string you want to add as a comment
+    """
+    url = f"https://api.trello.com/1/cards/{card['id']}/actions/comments"
+    payload = {
+        "key": myKey, 
+        "token": myToken, 
+        "text": text
+        }
     response = requests.request("POST", url, params=payload)
 
-def identifier(card):
+def find_owner(card):
     """find the first person to work on the card and return their username
-    lets me write an @ message to them in a comment"""
-    url = "https://api.trello.com/1/cards/" + card['id'] + "/actions"
-    payload = {"key": myKey, "token": myToken, "filter": "all"}
+    lets you write an @ message to them in a comment
+
+    It gets all the actions on the card and then looks at who did the very first one
+    """
+    url = f"https://api.trello.com/1/cards/{card['id']}/actions"
+    payload = {
+        "key": myKey, 
+        "token": myToken, 
+        "filter": "all"
+        }
     response = requests.request("GET", url, params=payload)
     return json.loads(response.text)[-1]['memberCreator']['username']
 
-def checkAll(column, badCards):
-    """Look through a column for problems with cards. Always checks for
+def check_all(column, bad_cards):
+    """Looks through a column for problems with cards. Always checks for
     priority labels and fixes them if wrong or missing. On Mondays, also
-    checks that cards are sized and have due dates."""
-    cards = getCards(column)
+    checks that cards are sized and have due dates.
+    """
+    cards = get_cards(column)
     day = datetime.datetime.today().weekday() # day of week as integer
 
     for card in cards:
         # ignore the blank admin tickets
         if not card['name'].startswith(('Priority ', 'LEAVE THE ONES')):
-            person = '@' + str(identifier(card)) # card owner to @ when replying
+            person = '@' + str(find_owner(card)) # card owner to @ when replying
 
             # This is the part that checks due dates and sizes
             if day == 0: # if it's Monday - otherwise doesn't run
                 #CHECK DATES
-                if card['due'] is None:
-                    commenter(card, person + " Please could you add a due date to this card? Thanks!" + signature)
-                    badCards['date'].append(str("No due date: " + card['url']))
+                if card['due'] is None: # if not due date
+                    add_comment(card, person + " Please could you add a due date to this card? Thanks!" + signature)
+                    bad_cards['date'].append(str("No due date: " + card['url']))
 
                 #CHECK SIZE
-                if not card['pluginData']: # This is where the sizing data lives
-                    commenter(card, person + " Please could you size this card? Thanks!" + signature)
-                    badCards['size'].append(str("Not sized: " + card['url']))
+                if not card['pluginData']: # if no size added
+                    add_comment(card, person + " Please could you size this card? Thanks!" + signature)
+                    bad_cards['size'].append(str("Not sized: " + card['url']))
 
             #CHECK PRIORITY
-            # Get just the pink labels, as they're the ones for marking priority
+            # list just the card's pink labels, as they're the ones for marking priority
             labels = [label['name'] for label in card['labels'] if label['color'] == 'pink']
 
             # add a label to a card that doesn't have one
             if not labels:
-                labeller(card, labelDict[card['idList']])
-                commenter(card, person + " This had no priority label, so I've added one. Please can you check it's right? Thanks!" + signature)
-                badCards['priority'].append(str("No priority label: " + card['url']))
+                add_label(card, label_dict[card['idList']])
+                add_comment(card, person + " This had no priority label, so I've added one. Please can you check it's right? Thanks!" + signature)
+                bad_cards['priority'].append(str("No priority label: " + card['url']))
 
-            # remove labels if there are more than one, then add one matching column
+            # remove labels if there are more than one, then add one that matches column
             elif len(labels) > 1:
-                unlabeller(card)
-                labeller(card, labelDict[card['idList']])
-                commenter(card, person + " This had more than one priority label. I've removed the one that didn't match the priority list, but please can you check? Thanks!" + signature)
-                badCards['priority'].append(str("More than 1 priority label: " + card['url']))
+                remove_priority_labels(card)
+                add_label(card, label_dict[card['idList']])
+                add_comment(card, person + " This had more than one priority label. I've removed the one that didn't match the priority list, but please can you check? Thanks!" + signature)
+                bad_cards['priority'].append(str("More than 1 priority label: " + card['url']))
 
             else:
                 try:
                     # If the label doesn't match the column, remove it and add the right one
                     # Only works if the label matches one of the 4 standard priority ones
-                    if priorityDict[labels[0]] != card['idList']:
-                        unlabeller(card)
-                        labeller(card, labelDict[card['idList']])
-                        commenter(card, person + " This card's priority label didn't match the list it's in. I've changed the label to match the list, but please can you check this is right? Thanks!" + signature)
-                        badCards['priority'].append(str("Priority label didn't match list: " + card['url']))
+                    if priority_dict[labels[0]] != card['idList']:
+                        remove_priority_labels(card)
+                        add_label(card, label_dict[card['idList']])
+                        add_comment(card, person + " This card's priority label didn't match the list it's in. I've changed the label to match the list, but please can you check this is right? Thanks!" + signature)
+                        bad_cards['priority'].append(str("Priority label didn't match list: " + card['url']))
 
                 # If the label is pink but not one of the 4 standard priority labels, fix it
                 except KeyError:
-                    unlabeller(card)
-                    labeller(card, labelDict[card['idList']])
-                    commenter(card, person + " The priority label on this card was weird. I've changed the label to a standard one, but please can you check? Thanks!" + signature)
-                    badCards['priority'].append(str("Nonstandard priority label: " + card['url']))
+                    remove_priority_labels(card)
+                    add_label(card, label_dict[card['idList']])
+                    add_comment(card, person + " The priority label on this card was weird. I've changed the label to a standard one, but please can you check? Thanks!" + signature)
+                    bad_cards['priority'].append(str("Nonstandard priority label: " + card['url']))
 
 def begin():
-    """Runs the checker and adds summary to admin ticket"""
+    """Runs the checker and adds summary to admin ticket
+    """
     #make dictionary of problems, then run checks on each column
-    badCards = {'date': [], 'priority': [], 'size': []}
+    bad_cards = {'date': [], 'priority': [], 'size': []}
     for column in prioritised:
-        checkAll(column, badCards)
+        check_all(column, bad_cards)
 
     # If problem cards found, write a summary of changes on the admin ticket
     # The admin ticket is at https://trello.com/c/BJSsaiRh/2712-automated-reports-on-cards-with-priority-label-errors
     # Split into batches of 25 as there's a length limit on Trello comments
-    for lst in badCards.values():
+    for lst in bad_cards.values():
         todo = len(lst)
         start = 0
         finish = 25
@@ -168,7 +195,7 @@ def begin():
             finish += 25
             todo -= 25
 
-        # Final comment for any left over after the batches of 30
+        # Final comment for any left over after the batches of 25
         report = "\n\n".join(lst[start:])
         url = "https://api.trello.com/1/cards/5c66a8959e872641c7a6f5bc/actions/comments"
         payload = {"key": myKey, "token": myToken, "text": report}
